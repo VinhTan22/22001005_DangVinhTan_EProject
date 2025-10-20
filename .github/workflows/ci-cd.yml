@@ -16,22 +16,12 @@ jobs:
         image: mongo:latest
         ports:
           - "27017:27017"
-        options: >-
-          --health-cmd "mongo --eval 'db.adminCommand(\"ping\")'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
 
       rabbitmq:
         image: rabbitmq:3-management
         ports:
           - "5672:5672"
           - "15672:15672"
-        options: >-
-          --health-cmd "rabbitmq-diagnostics -q ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
 
     steps:
       - name: 🧩 Checkout source code
@@ -42,17 +32,11 @@ jobs:
         with:
           node-version: 18
 
-      - name: 🕐 Wait for MongoDB & RabbitMQ
-        run: |
-          echo "Waiting for MongoDB and RabbitMQ to be ready..."
-          sleep 20
-
       - name: 📦 Install dependencies for all services
         run: |
           set -e
           for dir in auth product order api-gateway; do
             if [ -d "$dir" ]; then
-              echo "Installing dependencies in $dir..."
               cd $dir
               npm install --legacy-peer-deps
               cd ..
@@ -81,13 +65,11 @@ jobs:
       - name: 🏗️ Build & Push Docker Images
         run: |
           set -e
-          echo "🏗️ Building Docker images..."
           docker build -t ${{ secrets.DOCKER_USERNAME }}/auth-service ./auth
           docker build -t ${{ secrets.DOCKER_USERNAME }}/product-service ./product
           docker build -t ${{ secrets.DOCKER_USERNAME }}/order-service ./order
           docker build -t ${{ secrets.DOCKER_USERNAME }}/api-gateway ./api-gateway
 
-          echo "📤 Pushing images to Docker Hub..."
           docker push ${{ secrets.DOCKER_USERNAME }}/auth-service
           docker push ${{ secrets.DOCKER_USERNAME }}/product-service
           docker push ${{ secrets.DOCKER_USERNAME }}/order-service
@@ -97,7 +79,6 @@ jobs:
     name: 🚀 Deploy to Server
     runs-on: ubuntu-latest
     needs: docker_build_push
-    if: github.ref == 'refs/heads/main'
 
     steps:
       - name: 📦 Deploy via SSH
@@ -107,16 +88,8 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            set -e
             cd /home/deploy/project
-            echo "🧹 Stopping old containers..."
             docker compose down
-
-            echo "⬇️ Pulling latest images..."
             docker compose pull
-
-            echo "🚀 Starting services..."
             docker compose up -d
-
-            echo "🧼 Cleaning up old images..."
             docker image prune -f
