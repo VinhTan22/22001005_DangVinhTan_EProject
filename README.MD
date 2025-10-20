@@ -21,7 +21,7 @@ Test all business logic with POSTMAN
 
 -LOGIN
 
-![alt text](public/product/login_test.png)
+![alt text](public/auth/register_tontai.png)
 
 -NHAP SAI USERNAME OR PASSWORD
 ![alt text](public/product/error_pw_us.png)
