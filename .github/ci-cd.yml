@@ -15,18 +15,27 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v3
 
-      # 2. Đăng nhập Docker Hub TRƯỚC để tránh lỗi 503
+      # 2. Thiết lập Docker Buildx (có retry nếu lỗi 503)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3.3.0
+        continue-on-error: true
+
+      - name: Retry Buildx setup if failed
+        if: failure()
+        run: |
+          echo "Retrying Buildx setup..."
+          sleep 15
+          docker buildx create --use || echo "Buildx fallback activated"
+
+      # 3. Đăng nhập Docker Hub (đặt sau setup để tránh lỗi auth)
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # 3. Thiết lập Docker Buildx
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
       # 4. Build + Push từng service
+
       - name: Build and push Auth service
         uses: docker/build-push-action@v6
         with:
@@ -35,6 +44,8 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/auth-service:latest
             ${{ secrets.DOCKER_USERNAME }}/auth-service:${{ github.run_number }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Build and push Product service
         uses: docker/build-push-action@v6
@@ -44,6 +55,8 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/product-service:latest
             ${{ secrets.DOCKER_USERNAME }}/product-service:${{ github.run_number }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Build and push Order service
         uses: docker/build-push-action@v6
@@ -53,6 +66,8 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/order-service:latest
             ${{ secrets.DOCKER_USERNAME }}/order-service:${{ github.run_number }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Build and push API Gateway
         uses: docker/build-push-action@v6
@@ -62,3 +77,5 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/api-gateway:latest
             ${{ secrets.DOCKER_USERNAME }}/api-gateway:${{ github.run_number }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
