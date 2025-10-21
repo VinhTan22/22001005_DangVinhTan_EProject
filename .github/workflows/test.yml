@@ -30,10 +30,10 @@ jobs:
           - 15672:15672
 
     steps:
-    - name: Checkout code
+    - name: 🧩 Checkout code
       uses: actions/checkout@v4
 
-    - name: Setup Node.js
+    - name: ⚙️ Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '18'
@@ -44,7 +44,7 @@ jobs:
           order/package-lock.json
           api-gateway/package-lock.json
 
-    - name: Create .env files for CI
+    - name: 📝 Create .env files for CI
       run: |
         echo "⚙️ Creating .env files..."
         
@@ -71,7 +71,7 @@ jobs:
         echo "PRODUCT_SERVICE=http://localhost:3002" >> api-gateway/.env
         echo "ORDER_SERVICE=http://localhost:3004" >> api-gateway/.env
 
-    - name: Install dependencies
+    - name: 📦 Install dependencies
       run: |
         echo "📥 Installing dependencies for all services..."
         cd auth && npm ci && cd ..
@@ -79,12 +79,12 @@ jobs:
         cd order && npm ci && cd ..
         cd api-gateway && npm ci && cd ..
 
-    - name: Wait for MongoDB and RabbitMQ to be ready
+    - name: ⏳ Wait for MongoDB and RabbitMQ
       run: |
-        echo "⏳ Waiting for MongoDB & RabbitMQ..."
+        echo "Waiting for MongoDB & RabbitMQ to be ready..."
         sleep 25
 
-    - name: Run tests for all services
+    - name: 🧪 Run tests for all services
       run: |
         echo "🧪 Running tests..."
         
@@ -100,22 +100,40 @@ jobs:
         echo "Testing API Gateway..."
         cd api-gateway && npm test -- --passWithNoTests || true && cd ..
 
-    - name: Build Docker images
+    - name: 🐳 Build Docker images
       run: |
         echo "🐳 Building Docker images..."
         docker compose -f docker-compose.yml build
+
 
   deploy:
     needs: test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    
+
     steps:
-    - name: Checkout code
+    - name: 🧩 Checkout code
       uses: actions/checkout@v4
 
-    - name: Deploy notification
-      run: |
-        echo "🚀 Deployment stage"
-        echo "Auth → 3001 | Product → 3002 | API Gateway → 3003 | Order → 3004"
-        echo "Next step: push Docker images to registry or deploy to VPS/cloud"
+    - name: 🧱 Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: 🔐 Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: 🏗️ Build and push Docker images
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: |
+          tandang2202/auth:latest
+          tandang2202/product:latest
+          tandang2202/order:latest
+          tandang2202/api-gateway:latest
+
+    - name: ✅ Done
+      run: echo "✅ Docker images pushed to Docker Hub successfully!"
