@@ -1,7 +1,6 @@
 version: "3.8"
 
 services:
-  #RabbitMQ
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
@@ -11,7 +10,6 @@ services:
     networks:
       - micro_network
 
-  #MongoDB
   mymongodb:
     image: mongo:7.0
     container_name: mymongodb
@@ -23,19 +21,12 @@ services:
     networks:
       - micro_network
 
-  #API Gateway
   api-gateway:
+    image: tandang2202/api-gateway:latest    
     build: ./api-gateway
     container_name: api-gateway
     ports:
       - "3003:3003"
-    environment:
-      - PORT=3003
-      - AUTH_SERVICE_URL=http://auth:3000
-      - PRODUCT_SERVICE_URL=http://product:3001
-      - ORDER_SERVICE_URL=http://order:3002
-      - JWT_SECRET=mySuperSecretKey_22001005_Tan_@2025
-      - LOG_LEVEL=debug
     depends_on:
       - auth
       - order
@@ -43,8 +34,8 @@ services:
     networks:
       - micro_network
 
-  # Auth Service
   auth:
+    image: tandang2202/auth:latest           
     build: ./auth
     container_name: auth
     environment:
@@ -55,12 +46,12 @@ services:
       - mymongodb
       - rabbitmq
     ports:
-      - "3000:3000"
+      - "3001:3001"
     networks:
       - micro_network
 
-  # Product Service
   product:
+    image: tandang2202/product:latest        
     build: ./product
     container_name: product
     environment:
@@ -71,12 +62,12 @@ services:
       - mymongodb
       - rabbitmq
     ports:
-      - "3001:3001"
+      - "3002:3002"
     networks:
       - micro_network
 
-  # Order Service
   order:
+    image: tandang2202/order:latest         
     build: ./order
     container_name: order
     environment:
@@ -87,7 +78,7 @@ services:
       - mymongodb
       - rabbitmq
     ports:
-      - "3002:3002"
+      - "3004:3004"
     networks:
       - micro_network
     command: sh -c "sleep 10 && npm start"

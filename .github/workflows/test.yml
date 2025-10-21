@@ -47,29 +47,30 @@ jobs:
     - name: 📝 Create .env files for CI
       run: |
         echo "⚙️ Creating .env files..."
-        
+
         # 🧑‍💻 AUTH SERVICE
-        echo "PORT=3001" >> auth/.env
+        echo "PORT=3000" >> auth/.env
         echo "MONGODB_AUTH_URI=mongodb://mymongodb:27017/authdb_test" >> auth/.env
         echo "JWT_SECRET=mySuperSecretKey_22001005_Tan_@2025" >> auth/.env
         echo "RABBITMQ_URL=amqp://rabbitmq" >> auth/.env
 
         # 📦 PRODUCT SERVICE
-        echo "PORT=3002" >> product/.env
+        echo "PORT=3001" >> product/.env
         echo "MONGODB_PRODUCT_URI=mongodb://mongodb-product:27017/productdb_test" >> product/.env
         echo "JWT_SECRET=mySuperSecretKey_22001005_Tan_@2025" >> product/.env
         echo "RABBITMQ_URL=amqp://rabbitmq" >> product/.env
 
         # 🧾 ORDER SERVICE
-        echo "PORT=3004" >> order/.env
+        echo "PORT=3002" >> order/.env
         echo "MONGODB_ORDER_URI=mongodb://mongodb-order:27017/orderdb_test" >> order/.env
         echo "RABBITMQ_URL=amqp://rabbitmq" >> order/.env
 
         # 🌐 API GATEWAY
         echo "PORT=3003" >> api-gateway/.env
-        echo "AUTH_SERVICE=http://localhost:3001" >> api-gateway/.env
-        echo "PRODUCT_SERVICE=http://localhost:3002" >> api-gateway/.env
-        echo "ORDER_SERVICE=http://localhost:3004" >> api-gateway/.env
+        echo "AUTH_SERVICE_URL=http://auth:3000" >> api-gateway/.env
+        echo "PRODUCT_SERVICE_URL=http://product:3001" >> api-gateway/.env
+        echo "ORDER_SERVICE_URL=http://order:3002" >> api-gateway/.env
+        echo "JWT_SECRET=mySuperSecretKey_22001005_Tan_@2025" >> api-gateway/.env
 
     - name: 📦 Install dependencies
       run: |
@@ -87,22 +88,22 @@ jobs:
     - name: 🧪 Run tests for all services
       run: |
         echo "🧪 Running tests..."
-        
+
         echo "Testing Auth Service..."
         cd auth && npm test -- --passWithNoTests || true && cd ..
-        
+
         echo "Testing Product Service..."
         cd product && npm test -- --passWithNoTests || true && cd ..
-        
+
         echo "Testing Order Service..."
         cd order && npm test -- --passWithNoTests || true && cd ..
-        
+
         echo "Testing API Gateway..."
         cd api-gateway && npm test -- --passWithNoTests || true && cd ..
 
-    - name: 🐳 Build Docker images
+    - name: 🐳 Build Docker images (Compose)
       run: |
-        echo "🐳 Building Docker images..."
+        echo "🐳 Building all images from docker-compose.yml"
         docker compose -f docker-compose.yml build
 
 
@@ -124,16 +125,34 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
-    - name: 🏗️ Build and push Docker images
+    # Build & Push từng service riêng biệt
+    - name: 🚀 Build and push AUTH image
       uses: docker/build-push-action@v5
       with:
-        context: .
+        context: ./auth
         push: true
-        tags: |
-          tandang2202/auth:latest
-          tandang2202/product:latest
-          tandang2202/order:latest
-          tandang2202/api-gateway:latest
+        tags: tandang2202/auth:latest
+
+    - name: 🚀 Build and push PRODUCT image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./product
+        push: true
+        tags: tandang2202/product:latest
+
+    - name: 🚀 Build and push ORDER image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./order
+        push: true
+        tags: tandang2202/order:latest
+
+    - name: 🚀 Build and push API-GATEWAY image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./api-gateway
+        push: true
+        tags: tandang2202/api-gateway:latest
 
     - name: ✅ Done
-      run: echo "✅ Docker images pushed to Docker Hub successfully!"
+      run: echo "✅ All Docker images built & pushed to Docker Hub successfully!"
