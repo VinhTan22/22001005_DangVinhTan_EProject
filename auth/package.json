@@ -19,7 +19,6 @@
   },
   "devDependencies": {
     "chai": "^6.2.0",
-    "chai-http": "^5.1.2",
     "dotenv": "^16.6.1"
   }
 }
