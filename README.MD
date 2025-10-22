@@ -58,8 +58,16 @@ docker-compose up --build
 ![alt text](public/docker/docker.png)
 ![alt text](public/docker/docker_1.png)
 ![alt text](public/docker/image_docker.png)
+
 - Thao tác với github Action: Thực hiện CI/CD với dự án
 ![alt text](public/CI_CD_DOCKER/CI_CD.png)
 - CI/CD liên kết với Docker
 ![alt text](public/CI_CD_DOCKER/CI_CD_LK_DOCKER.png) 
+
+- GET Product_ID
+![alt text](public/product/GET_Product_ID.png)
+- Thao tác với github Action: Thực hiện CI/CD với dự án 
+![alt text](public/docker/CI_CD.png)
+- CI/CD liên kết với Docker
+![alt text](public/docker/CI_CD_LK_DOCKER.png)
 
